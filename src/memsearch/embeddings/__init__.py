@@ -51,6 +51,8 @@ def get_provider(
     *,
     model: str | None = None,
     batch_size: int = 0,
+    base_url: str | None = None,
+    api_key: str | None = None,
 ) -> EmbeddingProvider:
     """Instantiate an embedding provider by name.
 
@@ -63,6 +65,10 @@ def get_provider(
     batch_size:
         Maximum number of texts per embedding API call.
         ``0`` means use the provider's built-in default.
+    base_url:
+        Override the API base URL (currently only used by the openai provider).
+    api_key:
+        Override the API key (currently only used by the openai provider).
     """
     if name not in _PROVIDERS:
         raise ValueError(
@@ -88,6 +94,11 @@ def get_provider(
         kwargs["model"] = model
     if batch_size > 0:
         kwargs["batch_size"] = batch_size
+    if name == "openai":
+        if base_url:
+            kwargs["base_url"] = base_url
+        if api_key:
+            kwargs["api_key"] = api_key
     return cls(**kwargs)
 
 

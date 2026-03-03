@@ -33,6 +33,8 @@ _PARAM_MAP = {
     "provider": "embedding.provider",
     "model": "embedding.model",
     "batch_size": "embedding.batch_size",
+    "base_url": "embedding.base_url",
+    "api_key": "embedding.api_key",
     "collection": "milvus.collection",
     "milvus_uri": "milvus.uri",
     "milvus_token": "milvus.token",
@@ -66,6 +68,8 @@ def _cfg_to_memsearch_kwargs(cfg: MemSearchConfig) -> dict:
         "embedding_provider": cfg.embedding.provider,
         "embedding_model": cfg.embedding.model or None,
         "embedding_batch_size": cfg.embedding.batch_size,
+        "embedding_base_url": cfg.embedding.base_url or None,
+        "embedding_api_key": cfg.embedding.api_key or None,
         "milvus_uri": cfg.milvus.uri,
         "milvus_token": cfg.milvus.token or None,
         "collection": cfg.milvus.collection,
@@ -81,6 +85,8 @@ def _common_options(f):
     f = click.option("--provider", "-p", default=None, help="Embedding provider.")(f)
     f = click.option("--model", "-m", default=None, help="Override embedding model.")(f)
     f = click.option("--batch-size", default=None, type=int, help="Embedding batch size (0 = provider default).")(f)
+    f = click.option("--base-url", default=None, help="OpenAI-compatible API base URL.")(f)
+    f = click.option("--api-key", default=None, help="API key for the embedding provider.")(f)
     f = click.option("--collection", "-c", default=None, help="Milvus collection name.")(f)
     f = click.option("--milvus-uri", default=None, help="Milvus connection URI.")(f)
     f = click.option("--milvus-token", default=None, help="Milvus auth token.")(f)
@@ -102,6 +108,8 @@ def index(
     provider: str | None,
     model: str | None,
     batch_size: int | None,
+    base_url: str | None,
+    api_key: str | None,
     collection: str | None,
     milvus_uri: str | None,
     milvus_token: str | None,
@@ -112,6 +120,7 @@ def index(
 
     cfg = resolve_config(_build_cli_overrides(
         provider=provider, model=model, batch_size=batch_size,
+        base_url=base_url, api_key=api_key,
         collection=collection,
         milvus_uri=milvus_uri, milvus_token=milvus_token,
     ))
@@ -134,6 +143,8 @@ def search(
     provider: str | None,
     model: str | None,
     batch_size: int | None,
+    base_url: str | None,
+    api_key: str | None,
     collection: str | None,
     milvus_uri: str | None,
     milvus_token: str | None,
@@ -144,6 +155,7 @@ def search(
 
     cfg = resolve_config(_build_cli_overrides(
         provider=provider, model=model, batch_size=batch_size,
+        base_url=base_url, api_key=api_key,
         collection=collection,
         milvus_uri=milvus_uri, milvus_token=milvus_token,
     ))
@@ -206,6 +218,8 @@ def expand(
     provider: str | None,
     model: str | None,
     batch_size: int | None,
+    base_url: str | None,
+    api_key: str | None,
     collection: str | None,
     milvus_uri: str | None,
     milvus_token: str | None,
@@ -221,6 +235,7 @@ def expand(
 
     cfg = resolve_config(_build_cli_overrides(
         provider=provider, model=model, batch_size=batch_size,
+        base_url=base_url, api_key=api_key,
         collection=collection,
         milvus_uri=milvus_uri, milvus_token=milvus_token,
     ))
@@ -394,6 +409,8 @@ def watch(
     provider: str | None,
     model: str | None,
     batch_size: int | None,
+    base_url: str | None,
+    api_key: str | None,
     collection: str | None,
     milvus_uri: str | None,
     milvus_token: str | None,
@@ -404,6 +421,7 @@ def watch(
 
     cfg = resolve_config(_build_cli_overrides(
         provider=provider, model=model, batch_size=batch_size,
+        base_url=base_url, api_key=api_key,
         collection=collection,
         milvus_uri=milvus_uri, milvus_token=milvus_token,
         debounce_ms=debounce_ms,
@@ -449,6 +467,8 @@ def compact(
     provider: str | None,
     model: str | None,
     batch_size: int | None,
+    base_url: str | None,
+    api_key: str | None,
     collection: str | None,
     milvus_uri: str | None,
     milvus_token: str | None,
@@ -458,6 +478,7 @@ def compact(
 
     cfg = resolve_config(_build_cli_overrides(
         provider=provider, model=model, batch_size=batch_size,
+        base_url=base_url, api_key=api_key,
         collection=collection,
         milvus_uri=milvus_uri, milvus_token=milvus_token,
         llm_provider=llm_provider, llm_model=llm_model,
@@ -598,6 +619,14 @@ def config_init(project: bool) -> None:
     _emb_model_default = current.embedding.model or _embedding_defaults.get(_emb_provider, "")
     result["embedding"]["model"] = click.prompt(
         "  Model", default=_emb_model_default,
+    )
+    result["embedding"]["base_url"] = click.prompt(
+        "  Base URL (empty for default, or env:VAR_NAME)",
+        default=current.embedding.base_url,
+    )
+    result["embedding"]["api_key"] = click.prompt(
+        "  API key (empty for env default, or env:VAR_NAME)",
+        default=current.embedding.api_key,
     )
 
     # Chunking

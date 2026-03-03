@@ -6,6 +6,7 @@ Priority chain (lowest to highest):
 
 from __future__ import annotations
 
+import os
 import sys
 
 if sys.version_info >= (3, 11):
@@ -40,6 +41,8 @@ class EmbeddingConfig:
     provider: str = "openai"
     model: str = ""
     batch_size: int = 0  # 0 = use provider default
+    base_url: str = ""  # OpenAI-compatible endpoint URL
+    api_key: str = ""  # API key (supports "env:VAR_NAME" syntax)
 
 
 @dataclass
@@ -77,6 +80,41 @@ _SECTION_CLASSES: dict[str, type] = {
     "chunking": ChunkingConfig,
     "watch": WatchConfig,
 }
+
+
+_ENV_PREFIX = "env:"
+
+
+def resolve_env_ref(value: str) -> str:
+    """Resolve an ``env:VAR_NAME`` reference to its environment variable value.
+
+    If *value* starts with ``env:``, the remainder is used as an environment
+    variable name.  Returns the variable's value, or raises ``KeyError`` if
+    the variable is not set.  Non-prefixed strings are returned unchanged.
+    """
+    if not isinstance(value, str) or not value.startswith(_ENV_PREFIX):
+        return value
+    var_name = value[len(_ENV_PREFIX):]
+    env_val = os.environ.get(var_name)
+    if env_val is None:
+        raise KeyError(
+            f"Environment variable {var_name!r} referenced in config "
+            f"(via {value!r}) is not set"
+        )
+    return env_val
+
+
+def _resolve_env_refs_in_dict(d: dict[str, Any]) -> dict[str, Any]:
+    """Walk a nested config dict and resolve all ``env:`` references."""
+    resolved = {}
+    for key, val in d.items():
+        if isinstance(val, dict):
+            resolved[key] = _resolve_env_refs_in_dict(val)
+        elif isinstance(val, str) and val.startswith(_ENV_PREFIX):
+            resolved[key] = resolve_env_ref(val)
+        else:
+            resolved[key] = val
+    return resolved
 
 
 def _default_dict() -> dict[str, Any]:
@@ -135,6 +173,7 @@ def resolve_config(cli_overrides: dict[str, Any] | None = None) -> MemSearchConf
     result = deep_merge(result, load_config_file(PROJECT_CONFIG_PATH))
     if cli_overrides:
         result = deep_merge(result, cli_overrides)
+    result = _resolve_env_refs_in_dict(result)
     cfg = _dict_to_config(result)
 
     # Fill in the provider's default model when model is empty

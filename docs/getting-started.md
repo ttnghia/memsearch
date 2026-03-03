@@ -414,7 +414,7 @@ memsearch uses a layered configuration system. Settings are resolved in priority
 
 Higher-priority sources override lower ones. This means you can set defaults globally, customize per project, and override on the fly with CLI flags.
 
-> **Note:** API keys for embedding and LLM providers (e.g. `OPENAI_API_KEY`, `GOOGLE_API_KEY`) are read from environment variables by their respective SDKs. They are **not** stored in memsearch config files. See [API Keys](#api-keys) below.
+> **Note:** API keys can be configured via environment variables (e.g. `OPENAI_API_KEY`) or in config files using the `env:` reference syntax (e.g. `api_key = "env:MY_API_KEY"`). See [API Keys](#api-keys) and [Environment Variable References](#environment-variable-references) below.
 
 ### Interactive config wizard
 
@@ -468,6 +468,8 @@ collection = "memsearch_chunks"
 [embedding]
 provider = "openai"
 model = ""
+base_url = ""
+api_key = ""
 
 [chunking]
 max_chunk_size = 1500
@@ -481,6 +483,47 @@ llm_provider = "openai"
 llm_model = ""
 prompt_file = ""
 ```
+
+### Environment variable references
+
+Any string value in the config file can reference an environment variable using the `env:` prefix. This lets you keep secrets out of config files while still configuring them per-project:
+
+```toml
+# .memsearch.toml
+[embedding]
+provider = "openai"
+base_url = "https://my-azure.openai.azure.com"
+api_key = "env:AZURE_OPENAI_API_KEY"       # resolved from $AZURE_OPENAI_API_KEY at runtime
+
+[milvus]
+token = "env:MILVUS_TOKEN"                 # works for any string field
+```
+
+If the referenced environment variable is not set, memsearch raises an error at startup with a clear message. Plain string values (without the `env:` prefix) are used as-is.
+
+### Custom OpenAI-compatible endpoints
+
+The `embedding.base_url` and `embedding.api_key` fields allow using any OpenAI-compatible embedding API (Azure OpenAI, vLLM, LiteLLM, SiliconFlow, NVIDIA, etc.):
+
+```toml
+# .memsearch.toml — Azure OpenAI example
+[embedding]
+provider = "openai"
+model = "text-embedding-3-small"
+base_url = "https://my-resource.openai.azure.com"
+api_key = "env:AZURE_OPENAI_API_KEY"
+```
+
+```toml
+# .memsearch.toml — local vLLM example
+[embedding]
+provider = "openai"
+model = "BAAI/bge-small-en-v1.5"
+base_url = "http://localhost:8000/v1"
+api_key = "dummy"
+```
+
+These settings can also be passed via CLI flags (`--base-url`, `--api-key`) or the Python API (`embedding_base_url`, `embedding_api_key`).
 
 ### Get and set individual values
 

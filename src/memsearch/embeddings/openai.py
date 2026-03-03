@@ -17,16 +17,26 @@ class OpenAIEmbedding:
     _DEFAULT_BATCH_SIZE = 2048
 
     def __init__(
-        self, model: str = "text-embedding-3-small", *, batch_size: int = 0,
+        self,
+        model: str = "text-embedding-3-small",
+        *,
+        batch_size: int = 0,
+        base_url: str | None = None,
+        api_key: str | None = None,
     ) -> None:
         import openai
 
         kwargs: dict = {}
-        base_url = os.environ.get("OPENAI_BASE_URL")
-        if base_url:
-            kwargs["base_url"] = base_url
+        # Explicit params take priority over environment variables.
+        # Env vars (OPENAI_BASE_URL, OPENAI_API_KEY) are still read
+        # automatically by the openai SDK when not overridden here.
+        effective_base_url = base_url or os.environ.get("OPENAI_BASE_URL")
+        if effective_base_url:
+            kwargs["base_url"] = effective_base_url
+        if api_key:
+            kwargs["api_key"] = api_key
 
-        self._client = openai.AsyncOpenAI(**kwargs)  # reads OPENAI_API_KEY
+        self._client = openai.AsyncOpenAI(**kwargs)  # reads OPENAI_API_KEY if not provided
         self._model = model
         self._dimension = _detect_dimension(model, kwargs)
         self._batch_size = batch_size if batch_size > 0 else self._DEFAULT_BATCH_SIZE

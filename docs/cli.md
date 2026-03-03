@@ -195,6 +195,9 @@ provider = "openai"
 | `milvus.collection` | string | `memsearch_chunks` | Collection name |
 | `embedding.provider` | string | `openai` | Embedding provider name |
 | `embedding.model` | string | `""` | Override embedding model (empty = provider default) |
+| `embedding.batch_size` | int | `0` | Embedding batch size (0 = provider default) |
+| `embedding.base_url` | string | `""` | OpenAI-compatible API base URL (empty = SDK default) |
+| `embedding.api_key` | string | `""` | API key for embedding provider (supports `env:VAR_NAME` syntax) |
 | `chunking.max_chunk_size` | int | `1500` | Maximum chunk size in characters |
 | `chunking.overlap_lines` | int | `2` | Number of overlapping lines between adjacent chunks |
 | `watch.debounce_ms` | int | `1500` | File watcher debounce delay in milliseconds |
@@ -215,6 +218,8 @@ Scan one or more directories (or files) and index all markdown files (`.md`, `.m
 | `PATHS` | | *(required)* | One or more directories or files to index |
 | `--provider` | `-p` | `openai` | Embedding provider (`openai`, `google`, `voyage`, `ollama`, `local`) |
 | `--model` | `-m` | provider default | Override the embedding model name |
+| `--base-url` | | *(none)* | OpenAI-compatible API base URL |
+| `--api-key` | | *(none)* | API key for the embedding provider |
 | `--collection` | `-c` | `memsearch_chunks` | Milvus collection name |
 | `--milvus-uri` | | `~/.memsearch/milvus.db` | Milvus connection URI |
 | `--milvus-token` | | *(none)* | Milvus auth token (for server or Zilliz Cloud) |
@@ -277,6 +282,8 @@ Run a semantic search query against indexed chunks. Uses [hybrid search](https:/
 | `--top-k` | `-k` | `5` | Maximum number of results to return |
 | `--provider` | `-p` | `openai` | Embedding provider (must match the provider used at index time) |
 | `--model` | `-m` | provider default | Override the embedding model |
+| `--base-url` | | *(none)* | OpenAI-compatible API base URL |
+| `--api-key` | | *(none)* | API key for the embedding provider |
 | `--collection` | `-c` | `memsearch_chunks` | Milvus collection name |
 | `--milvus-uri` | | `~/.memsearch/milvus.db` | Milvus connection URI |
 | `--milvus-token` | | *(none)* | Milvus auth token |
@@ -351,6 +358,8 @@ Start a long-running file watcher that monitors directories for markdown file ch
 | `--debounce-ms` | | `1500` | Debounce delay in milliseconds; multiple rapid changes to the same file within this window are collapsed into a single re-index |
 | `--provider` | `-p` | `openai` | Embedding provider |
 | `--model` | `-m` | provider default | Override the embedding model |
+| `--base-url` | | *(none)* | OpenAI-compatible API base URL |
+| `--api-key` | | *(none)* | API key for the embedding provider |
 | `--collection` | `-c` | `memsearch_chunks` | Milvus collection name |
 | `--milvus-uri` | | `~/.memsearch/milvus.db` | Milvus connection URI |
 | `--milvus-token` | | *(none)* | Milvus auth token |
@@ -402,6 +411,8 @@ Use an LLM to compress all indexed chunks (or a subset) into a condensed markdow
 | `--prompt-file` | | *(none)* | Read the prompt template from a file instead |
 | `--provider` | `-p` | `openai` | Embedding provider (used to access the index) |
 | `--model` | `-m` | provider default | Override the embedding model |
+| `--base-url` | | *(none)* | OpenAI-compatible API base URL |
+| `--api-key` | | *(none)* | API key for the embedding provider |
 | `--collection` | `-c` | `memsearch_chunks` | Milvus collection name |
 | `--milvus-uri` | | `~/.memsearch/milvus.db` | Milvus connection URI |
 | `--milvus-token` | | *(none)* | Milvus auth token |
@@ -480,6 +491,8 @@ Look up a chunk by its hash in the index and return the surrounding context from
 | `--json-output` | `-j` | `false` | Output as JSON |
 | `--provider` | `-p` | `openai` | Embedding provider |
 | `--model` | `-m` | provider default | Override the embedding model |
+| `--base-url` | | *(none)* | OpenAI-compatible API base URL |
+| `--api-key` | | *(none)* | API key for the embedding provider |
 | `--collection` | `-c` | `memsearch_chunks` | Milvus collection name |
 | `--milvus-uri` | | `~/.memsearch/milvus.db` | Milvus connection URI |
 | `--milvus-token` | | *(none)* | Milvus auth token |
@@ -686,7 +699,7 @@ Dropped collection.
 
 ## Environment Variables
 
-memsearch reads API keys from environment variables. These are required by the corresponding embedding and LLM provider SDKs and are **not** stored in memsearch config files.
+memsearch reads API keys from environment variables by default. You can also configure them in TOML config files using the `env:VAR_NAME` reference syntax or the `embedding.api_key` / `embedding.base_url` fields. See [Configuration](getting-started.md#configuration) for details.
 
 ### API Keys
 

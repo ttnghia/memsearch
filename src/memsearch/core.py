@@ -50,6 +50,8 @@ class MemSearch:
         embedding_provider: str = "openai",
         embedding_model: str | None = None,
         embedding_batch_size: int = 0,
+        embedding_base_url: str | None = None,
+        embedding_api_key: str | None = None,
         milvus_uri: str = "~/.memsearch/milvus.db",
         milvus_token: str | None = None,
         collection: str = "memsearch_chunks",
@@ -60,7 +62,11 @@ class MemSearch:
         self._max_chunk_size = max_chunk_size
         self._overlap_lines = overlap_lines
         self._embedder: EmbeddingProvider = get_provider(
-            embedding_provider, model=embedding_model, batch_size=embedding_batch_size,
+            embedding_provider,
+            model=embedding_model,
+            batch_size=embedding_batch_size,
+            base_url=embedding_base_url,
+            api_key=embedding_api_key,
         )
         self._store = MilvusStore(
             uri=milvus_uri, token=milvus_token, collection=collection,

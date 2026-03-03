@@ -15,6 +15,7 @@ from memsearch.config import (
     get_config_value,
     load_config_file,
     resolve_config,
+    resolve_env_ref,
     save_config,
     set_config_value,
 )
@@ -130,3 +131,58 @@ def test_save_and_load_roundtrip(tmp_path: Path):
     save_config(data, path)
     loaded = load_config_file(path)
     assert loaded == data
+
+
+# -- env: resolver tests --
+
+
+def test_resolve_env_ref_plain():
+    """Non-prefixed strings should pass through unchanged."""
+    assert resolve_env_ref("https://api.openai.com") == "https://api.openai.com"
+    assert resolve_env_ref("") == ""
+    assert resolve_env_ref("sk-test123") == "sk-test123"
+
+
+def test_resolve_env_ref_env_prefix(monkeypatch: pytest.MonkeyPatch):
+    """env:VAR_NAME should resolve to the environment variable value."""
+    monkeypatch.setenv("MY_TEST_KEY", "resolved-value-123")
+    assert resolve_env_ref("env:MY_TEST_KEY") == "resolved-value-123"
+
+
+def test_resolve_env_ref_missing_var():
+    """env:VAR_NAME should raise KeyError if the variable is not set."""
+    import os
+    # Ensure the var doesn't exist
+    os.environ.pop("NONEXISTENT_MEMSEARCH_VAR", None)
+    with pytest.raises(KeyError, match="NONEXISTENT_MEMSEARCH_VAR"):
+        resolve_env_ref("env:NONEXISTENT_MEMSEARCH_VAR")
+
+
+def test_resolve_env_refs_in_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """resolve_config should resolve env: references in TOML values."""
+    monkeypatch.setenv("TEST_API_KEY", "sk-from-env")
+    monkeypatch.setenv("TEST_MILVUS_TOKEN", "token-from-env")
+
+    cfg_file = tmp_path / "config.toml"
+    save_config({
+        "embedding": {
+            "api_key": "env:TEST_API_KEY",
+            "base_url": "https://my-endpoint.com",
+        },
+        "milvus": {"token": "env:TEST_MILVUS_TOKEN"},
+    }, cfg_file)
+
+    monkeypatch.setattr("memsearch.config.GLOBAL_CONFIG_PATH", cfg_file)
+    monkeypatch.setattr("memsearch.config.PROJECT_CONFIG_PATH", tmp_path / "nope.toml")
+
+    cfg = resolve_config()
+    assert cfg.embedding.api_key == "sk-from-env"
+    assert cfg.embedding.base_url == "https://my-endpoint.com"
+    assert cfg.milvus.token == "token-from-env"
+
+
+def test_embedding_config_new_fields():
+    """EmbeddingConfig should have base_url and api_key fields with empty defaults."""
+    cfg = EmbeddingConfig()
+    assert cfg.base_url == ""
+    assert cfg.api_key == ""

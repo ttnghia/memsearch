@@ -26,6 +26,9 @@ MemSearch(
     *,
     embedding_provider="openai",
     embedding_model=None,
+    embedding_batch_size=0,
+    embedding_base_url=None,
+    embedding_api_key=None,
     milvus_uri="~/.memsearch/milvus.db",
     milvus_token=None,
     collection="memsearch_chunks",
@@ -39,6 +42,9 @@ MemSearch(
 | `paths` | `list[str \| Path]` | `[]` | Directories or files to index |
 | `embedding_provider` | `str` | `"openai"` | Embedding backend (`"openai"`, `"google"`, `"voyage"`, `"ollama"`, `"local"`) |
 | `embedding_model` | `str \| None` | `None` | Override the default model for the chosen provider |
+| `embedding_batch_size` | `int` | `0` | Max texts per embedding API call (0 = provider default) |
+| `embedding_base_url` | `str \| None` | `None` | OpenAI-compatible API base URL. Overrides `OPENAI_BASE_URL` env var |
+| `embedding_api_key` | `str \| None` | `None` | API key for the embedding provider. Overrides `OPENAI_API_KEY` env var |
 | `milvus_uri` | `str` | `"~/.memsearch/milvus.db"` | Milvus connection URI — local `.db` path for Milvus Lite (Linux/macOS only), `http://host:port` for Milvus Server, or `https://*.zillizcloud.com` for Zilliz Cloud |
 | `milvus_token` | `str \| None` | `None` | Auth token for Milvus Server or Zilliz Cloud |
 | `collection` | `str` | `"memsearch_chunks"` | Milvus collection name. Use different names to isolate agents sharing the same backend |
