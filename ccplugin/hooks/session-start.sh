@@ -117,8 +117,10 @@ start_watch
 
 # Lite mode: one-time index since watch is not running.
 # Runs in background subshell to avoid blocking the hook (ONNX model loading takes ~10s).
+# Kill any previous background index first to prevent process accumulation across sessions.
 # If embedding dimension changed (e.g. user switched provider), auto-reset and re-index.
 if [[ "$MILVUS_URI" != http* ]] && [[ "$MILVUS_URI" != tcp* ]]; then
+  kill_orphaned_index
   (
     _index_args=("$MEMORY_DIR")
     [ -n "$COLLECTION_NAME" ] && _index_args+=(--collection "$COLLECTION_NAME")
@@ -131,6 +133,7 @@ if [[ "$MILVUS_URI" != http* ]] && [[ "$MILVUS_URI" != tcp* ]]; then
       $MEMSEARCH_CMD index "${_index_args[@]}" 2>/dev/null || true
     fi
   ) &
+  echo $! > "$INDEX_PIDFILE"
 fi
 
 # Always include status in systemMessage
