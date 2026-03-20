@@ -131,6 +131,9 @@ fi
   echo ""
 } >> "$MEMORY_FILE"
 
+# Kill any previous background index before re-indexing to avoid process accumulation
+kill_orphaned_index
+
 # Index immediately — don't rely on watch (which may be killed by SessionEnd before debounce fires)
 run_memsearch index "$MEMORY_DIR"
 
