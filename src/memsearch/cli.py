@@ -123,6 +123,9 @@ def cli() -> None:
 @click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True))
 @_common_options
 @click.option("--force", is_flag=True, help="Re-index all files.")
+@click.option(
+    "--max-chunk-size", default=None, type=click.IntRange(min=1), help="Max chunk size in characters (must be >= 1)."
+)
 @click.option("--description", default=None, help="Collection description (written on creation only).")
 def index(
     paths: tuple[str, ...],
@@ -135,6 +138,7 @@ def index(
     milvus_uri: str | None,
     milvus_token: str | None,
     force: bool,
+    max_chunk_size: int | None,
     description: str | None,
 ) -> None:
     """Index markdown files from PATHS."""
@@ -150,6 +154,7 @@ def index(
             collection=collection,
             milvus_uri=milvus_uri,
             milvus_token=milvus_token,
+            max_chunk_size=max_chunk_size,
         )
     )
     ms = MemSearch(list(paths), **_cfg_to_memsearch_kwargs(cfg), description=description or "")
@@ -405,6 +410,9 @@ def _extract_section(
 @click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True))
 @_common_options
 @click.option("--debounce-ms", default=None, type=int, help="Debounce delay in ms.")
+@click.option(
+    "--max-chunk-size", default=None, type=click.IntRange(min=1), help="Max chunk size in characters (must be >= 1)."
+)
 @click.option("--description", default=None, help="Collection description (written on creation only).")
 def watch(
     paths: tuple[str, ...],
@@ -417,6 +425,7 @@ def watch(
     milvus_uri: str | None,
     milvus_token: str | None,
     debounce_ms: int | None,
+    max_chunk_size: int | None,
     description: str | None,
 ) -> None:
     """Watch PATHS for markdown changes and auto-index."""
@@ -433,6 +442,7 @@ def watch(
             milvus_uri=milvus_uri,
             milvus_token=milvus_token,
             debounce_ms=debounce_ms,
+            max_chunk_size=max_chunk_size,
         )
     )
     ms = MemSearch(list(paths), **_cfg_to_memsearch_kwargs(cfg), description=description or "")
