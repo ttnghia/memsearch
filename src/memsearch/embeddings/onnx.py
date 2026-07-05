@@ -56,8 +56,8 @@ class OnnxEmbedding:
         # BERT-family exports (e.g. Xenova/all-MiniLM-L6-v2) declare a
         # token_type_ids input; XLM-R-family exports (e.g. bge-m3) do not.
         # Session.run() requires every declared input to be fed.
-        self._input_names = {i.name for i in self._session.get_inputs()}
-        self._needs_token_type_ids = "token_type_ids" in self._input_names
+        input_names = {i.name for i in self._session.get_inputs()}
+        self._needs_token_type_ids = "token_type_ids" in input_names
         self._model = model
 
         # Detect dimension from a probe embedding
