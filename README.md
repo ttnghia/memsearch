@@ -618,6 +618,7 @@ memsearch config set milvus.uri http://localhost:19530  # switch Milvus backend
 ```bash
 memsearch index ./memory/                          # index markdown files
 memsearch index ./memory/ ./notes/ --force         # re-embed everything
+memsearch index . --ignore-file .gitignore         # opt in to repository ignore rules
 memsearch search "Redis caching"                   # hybrid search (BM25 + vector)
 memsearch search "auth flow" --top-k 10 --json-output  # JSON for scripting
 memsearch expand <chunk_hash>                      # show full section around a chunk
